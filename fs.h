@@ -26,6 +26,7 @@ void int2disk(int integer, int position, char *buffer);
 int disk2int(char *buffer, int position);
 void inode2disk(char *buffer, short inode_idx);
 void buffer_alloc(void);
+void init_inodes(void);
 
 typedef struct inode //32 bytes
 {
