@@ -63,35 +63,56 @@ int fs_mkfs(void)
     int2disk(DATA_BLOCK, 20, buffer);
     int2disk(BLOCK_SIZE, 24, buffer);
     int2disk(MAGIC_NUMBER, BLOCK_SIZE - 4, buffer);
-
     block_write(SUPERBLOCK, buffer);
+
     block_read(INODE_BLOCK, buffer);
 
-    //block_read(INODE_BLOCK, buffer);
-    inode_t inode;
-    inode.used = 1;
-    inode.is_dir = 1;
-    inode.index = 1;
-    inode.links = 1;
-    inode.file_size = 1;
-    inode.dbl1 = 1;
-    inode.dbl2 = 1;
-    inode.dbl3 = 1;
-    inode.dbl4 = 1;
-    inode.dbl5 = 1;
-    inode.dbl6 = 1;
-    inode.dbl7 = 1;
-    inode.dbl8 = 1;
-    inode.dbl9 = 1;
-    inode.dbl10 = 1;
-    inode.ibl1 = 1;
-    inode.ibl2 = 2;
-
-    printf("SIZE OF INODE = %d\n", (int)sizeof(inode));
-    bcopy((unsigned char *)&inode, (unsigned char *)buffer, sizeof(inode));
-    block_write(INODE_BLOCK, buffer);
+    init_inodes();
 
     return 0;
+}
+
+void init_inodes(void)
+{
+    int i;
+    int buffer_offset = 0;
+    int current_block = INODE_BLOCK;
+    int inode_size = INODE_SIZE_BYTES;
+    unsigned char *buffer_address = (unsigned char *)buffer;
+
+    inode_t inode;
+
+    inode.used = 0;
+    inode.is_dir = 0;
+    inode.links = 0;
+    inode.file_size = 0;
+    inode.dbl1 = 0;
+    inode.dbl2 = 0;
+    inode.dbl3 = 0;
+    inode.dbl4 = 0;
+    inode.dbl5 = 0;
+    inode.dbl6 = 0;
+    inode.dbl7 = 0;
+    inode.dbl8 = 0;
+    inode.dbl9 = 0;
+    inode.dbl10 = 0;
+    inode.ibl1 = 0;
+    inode.ibl2 = 0;
+
+    for (i = 0; i < INODES; i++)
+    {
+        inode.index = i;
+        block_read(current_block, buffer);
+        bcopy((unsigned char *)&inode, buffer_address, inode_size);
+        buffer_offset += inode_size;
+
+        if (buffer_offset >= sizeof(buffer))
+        {
+            block_write(current_block, buffer);
+            buffer_offset = 0;
+            current_block += 1;
+        }
+    }
 }
 
 void int2disk(int integer, int position, char *buffer)
